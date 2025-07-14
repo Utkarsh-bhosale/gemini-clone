@@ -1,2 +1,20 @@
-# Backend environment files
+# Node modules
+gemini-clone/node_modules/
+gemini-server/node_modules/
+
+# Build output
+gemini-clone/dist/
+gemini-server/dist/
+
+# Environment files
+gemini-clone/.env
 gemini-server/.env
+
+# Logs
+*.log
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
