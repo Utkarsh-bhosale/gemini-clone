@@ -11,8 +11,11 @@ const ContextProvider = (props) => {
   const [loading , setLoading] = useState(false);
   const [resultData , setResultData] = useState("");
 
+  //Typing Effect
   const delayPara = (index , nextWord) =>{
-
+    setTimeout(function () {
+      setResultData(prev=>prev+nextWord)
+    },75*index)
   }
 
   const onSent = async (prompt) => {
@@ -20,10 +23,28 @@ const ContextProvider = (props) => {
   setLoading(true);
   setShowResult(true);
   setRecentPrompt(input);
+  setPrevPrompts(prev=>[...prev,input])
 
   const response = await runChat(input);
 
   let formattedResponse = response;
+
+  // STEP 1: Process code blocks FIRST AND ISOLATE THEM 
+  // Replace code blocks with a temporary placeholder or a unique marker
+  // before processing other Markdown.
+  // The 'lang' and 'code' are captured for later use.
+  const codeBlocks = []; // To store processed code blocks
+  formattedResponse = formattedResponse.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+    const languageClass = lang ? `language-${lang.toLowerCase()}` : 'language-plaintext';
+    const htmlCode = `<pre><code class="${languageClass}">${code.trim()}</code></pre>`;
+    const placeholder = `__CODE_BLOCK_PLACEHOLDER_${codeBlocks.length}__`;
+    codeBlocks.push(htmlCode); // Store the HTML code block
+    return placeholder;        // Replace original with a placeholder
+  });
+
+
+  // STEP 2: Apply other Markdown formatting to the *rest* of the text
+  // Now, the '#' inside code blocks are gone, replaced by placeholders.
 
   // 1. Bold formatting (**)
   formattedResponse = formattedResponse.split('**').map((text, index) => {
@@ -34,30 +55,37 @@ const ContextProvider = (props) => {
   formattedResponse = formattedResponse.replace(/\n/g, "<br />");
 
   // 3. Headings (##, ###) - Order matters: handle longer ones first
-  formattedResponse = formattedResponse.replace(/###\s*(.*?)<br \/>/g, "<h3>$1</h3>"); // Handle ###
-  formattedResponse = formattedResponse.replace(/##\s*(.*?)<br \/>/g, "<h2>$1</h2>");   // Handle ##
+  formattedResponse = formattedResponse.replace(/###\s*(.*?)<br \/>/g, "<h3>$1</h3>");
+  formattedResponse = formattedResponse.replace(/##\s*(.*?)<br \/>/g, "<h2>$1</h2>");
 
   // 4. List items (*)
-  formattedResponse = formattedResponse.replace(/\* (.*?)(<br \/>|$)/g, "<li>$1</li>"); // Replace * with <li>
-  // Wrap list items in <ul> if they exist
+  formattedResponse = formattedResponse.replace(/\* (.*?)(<br \/>|$)/g, "<li>$1</li>");
   if (formattedResponse.includes("<li>")) {
-    // This is a simple approach; for more complex scenarios, you might need to build the list iteratively
     formattedResponse = "<ul>" + formattedResponse + "</ul>";
-    // Clean up any stray <br /> tags that might appear inside <ul> due to previous replacements
     formattedResponse = formattedResponse.replace(/<ul><br \/>/g, "<ul>").replace(/<br \/><\/ul>/g, "</ul>");
   }
 
-
-  // 5. Inline code (`text`)
+  // 5. Inline code (`text`) - this was wrongly placed after code blocks in your original list.
+  //    It should be before code blocks if they are processed after other markdown,
+  //    but with the placeholder strategy, order here is less critical relative to code blocks.
   formattedResponse = formattedResponse.replace(/`(.*?)`/g, "<code>$1</code>");
 
-  // 6. Code blocks (```text```)
-  formattedResponse = formattedResponse.replace(/```(.*?)```/gs, "<pre><code>$1</code></pre>");
 
-  setResultData(formattedResponse);
+  // STEP 3: Insert the processed code blocks back 
+  codeBlocks.forEach((htmlCode, index) => {
+    const placeholder = `__CODE_BLOCK_PLACEHOLDER_${index}__`;
+    formattedResponse = formattedResponse.replace(placeholder, htmlCode);
+  });
+
+  // setResultData(formattedResponse); // Use finalResponse if you renamed it, otherwise formattedResponse
+  let newFormattedResponse = formattedResponse.split(" ");
+  for(let i = 0 ; i < newFormattedResponse.length ; i++){
+    const nextWord = newFormattedResponse[i];
+    delayPara(i , nextWord+" ");
+  }
   setLoading(false);
   setInput("");
-};
+};  
 
 
   //onSent("what is react js?")

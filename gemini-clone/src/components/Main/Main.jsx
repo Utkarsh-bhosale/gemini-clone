@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React, { useContext , useEffect} from 'react'
 import './Main.css'
 import { assets } from '../../assets/assets'
 import { Context } from '../../context/context'
@@ -8,6 +8,21 @@ const Main = () => {
 
   const {onSent , recentPrompt , showResult , loading , resultData , setInput , input} = useContext(Context)
 
+  useEffect(() => {
+    // This effect runs whenever resultData, showResult, or loading changes
+    if (showResult && !loading && resultData) {
+      // Find all pre code blocks within the rendered result data
+      // Using querySelectorAll on the entire document might be less efficient for large apps
+      // For more targeted highlighting, you'd use a ref on the parent element of the new content.
+      // For a chatbot, if `resultData` is just the *latest* message, it's often fine.
+      document.querySelectorAll('pre code').forEach(block => {
+        // Only highlight if Prism hasn't already processed it (it adds a 'token' class)
+        if (!block.classList.contains('token')) {
+          Prism.highlightElement(block);
+        }
+      });
+    }
+  }, [resultData, showResult, loading]); // Dependencies for useEffect
 
   return (
     <div className='main'>

@@ -179,7 +179,7 @@
 }
 
 pre {
-  background-color: #f0f0f0; /* Light gray background */
+  background-color: #dcdcdc; /* Light gray background */
   padding: 15px;
   border-radius: 5px;
   overflow-x: auto; /* Enable horizontal scrolling for long lines */
