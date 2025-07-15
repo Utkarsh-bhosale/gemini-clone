@@ -22,11 +22,15 @@ const ContextProvider = (props) => {
   setResultData("");
   setLoading(true);
   setShowResult(true);
-  setRecentPrompt(input);
-  setPrevPrompts(prev=>[...prev,input])
-
-  const response = await runChat(input);
-
+  let response;
+  if(prompt !== undefined){
+    response = await runChat(prompt);
+    setRecentPrompt(prompt);
+  }else{
+    setPrevPrompts(prev=>[...prev,input])
+    setRecentPrompt(input);
+    response = await runChat(input);
+  }
   let formattedResponse = response;
 
   // STEP 1: Process code blocks FIRST AND ISOLATE THEM 
