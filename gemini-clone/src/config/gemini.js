@@ -10,6 +10,7 @@ const runChat = async (prompt) => {
   const data = await res.json();
   const response = data.response;
   console.log(response)
+  return response;
 }
 
 export default runChat;
